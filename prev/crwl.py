@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 
 prefix = 'https://vm009.rz.uos.de/crawl/index.html'
 
-start_url = prefix+'home.html'
+start_url = prefix
 
 agenda = [start_url]
 
