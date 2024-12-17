@@ -1,81 +1,97 @@
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 from whoosh.index import create_in
 from whoosh.fields import Schema, TEXT, ID
+from whoosh.qparser import QueryParser
+from whoosh import index
 import os
-from flask import Flask, request, jsonify
 
 class Crawler:
-    def __init__(self, base_url, index_dir="index"):
-        self.base_url = base_url
-        self.visited = set()
-        self.index_dir = index_dir
+    def __init__(self, start_url):
+        self.start_url = start_url
+        self.agenda = [start_url]  # Start with one URL
+        self.visited = set()  # A set to store visited URLs to avoid duplicates
+    
+    def get_all_links(self):
+        # List to store all found links
+        all_links = []
 
-        # Define schema for indexing
-        self.schema = Schema(
-            url=ID(stored=True, unique=True),
-            title=TEXT(stored=True),
-            content=TEXT
-        )
+        while self.agenda:
+            current_url = self.agenda.pop()  # Removes the last URL from the list
+            if current_url in self.visited:  # Skip URLs that were already visited
+                continue
 
-        # Create index directory if it doesn't exist
-        if not os.path.exists(self.index_dir):
-            os.mkdir(self.index_dir)
+            print("Processing URL:", current_url)
+            self.visited.add(current_url)  # Mark the current URL as visited
 
-        # Create or open index
-        self.index = create_in(self.index_dir, self.schema)
+            try:
+                r = requests.get(current_url)
+                if r.status_code == 200:
+                    soup = BeautifulSoup(r.content, 'html.parser')
 
-    def fetch_page(self, url):
-        """Fetch page content from a URL."""
-        try:
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            return response.text
-        except requests.RequestException as e:
-            print(f"Error fetching {url}: {e}")
-            return None
+                    # Find all links on the current page
+                    page_links = soup.find_all('a')
 
-    def parse_links(self, url, html):
-        """Extract and return all valid links from the page."""
-        soup = BeautifulSoup(html, "html.parser")
-        links = set()
-        for tag in soup.find_all("a", href=True):
-            href = tag['href']
-            if href.startswith("http"):
-                links.add(href)
-            elif href.startswith("/"):
-                links.add(self.base_url + href)
-        return links
+                    for link in page_links:
+                        href = link.get('href')  # Extract the href attribute from the <a> tag
+                        if not href:
+                            continue  # Skip if href is empty or None
+                        
+                        # Join the href with the base URL
+                        full_url = urljoin(current_url, href)
 
-    def extract_content(self, html):
-        """Extract the title and main content from the HTML."""
-        soup = BeautifulSoup(html, "html.parser")
-        title = soup.title.string if soup.title else ""
-        text = soup.get_text(separator=" ", strip=True)
-        return title, text
+                        # Only process internal URLs
+                        if not full_url.startswith("https://vm009.rz.uos.de/"):
+                            print("External URL:", full_url)
+                            continue
 
-    def index_page(self, url, title, content):
-        """Index a page's content."""
+                        # Add the link to the agenda if it hasn't been visited
+                        if full_url not in self.visited:
+                            self.agenda.append(full_url)
+                            print("Added to agenda:", full_url)
+
+                        # Add to the list of all links
+                        all_links.append(full_url)
+
+            except Exception as e:
+                print("Error fetching URL:", e)
+
+        return all_links
+    
+    def extract_info(self, all_links):
+        # Create an index directory where the Whoosh index will be stored
+        index_dir = "indexdir"
+        
+        # Create the directory for Whoosh index if it doesn't exist
+        if not os.path.exists(index_dir):
+            os.mkdir(index_dir)
+        
+        # Create an index if it doesn't exist
+        if not os.path.exists(os.path.join(index_dir, "segments")):
+            self.index = create_in(index_dir, self.schema)
+        else:
+            self.index = index.open_dir(index_dir)
+
+        # Open the index writer to add documents
         writer = self.index.writer()
-        writer.add_document(url=url, title=title, content=content)
+
+        for url in all_links:
+            try:
+                r = requests.get(url)
+                if r.status_code == 200:
+                    soup = BeautifulSoup(r.content, 'html.parser')
+                    content = soup.get_text()  # Extract all text from the page
+
+                    # Add the document to the index with the URL and content
+                    writer.add_document(url=url, content=content)
+                    print(f"Indexed URL: {url}")
+            except Exception as e:
+                print(f"Error indexing {url}: {e}")
+
+        # Commit the changes to the index
         writer.commit()
 
-    def crawl(self, url, depth=1):
-        """Crawl a URL up to a certain depth."""
-        if depth == 0 or url in self.visited:
-            return
+        print("Indexing complete!")
 
-        print(f"Crawling: {url}")
-        self.visited.add(url)
-
-        html = self.fetch_page(url)
-        if not html:
-            return
-
-        title, content = self.extract_content(html)
-        self.index_page(url, title, content)
-
-        links = self.parse_links(url, html)
-        for link in links:
-            self.crawl(link, depth - 1)
 

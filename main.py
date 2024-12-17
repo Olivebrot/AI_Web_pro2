@@ -6,13 +6,15 @@ from crawler import Crawler
 #from searchengine import SearchEngine
 
 
-base_url = "https://vm009.rz.uos.de/crawl/index.html"
-crawler = Crawler(base_url)
+start_url = "https://vm009.rz.uos.de/crawl/index.html"
 
-crawler.crawl(base_url,4)
-index = open_dir("index")
+crwl = Crawler(start_url)
+all_links = crwl.get_all_links()
+print("all links:", all_links)
+crwl.extract_info(all_links)
 
-print(index)
+
+
 
 
 
