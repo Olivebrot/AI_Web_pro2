@@ -10,8 +10,17 @@ start_url = "https://vm009.rz.uos.de/crawl/index.html"
 
 crwl = Crawler(start_url)
 all_links = crwl.get_all_links()
-print("all links:", all_links)
+print("done")
+# x = len(all_links)
+# for links in all_links:
+#     print("link",x,":",links)
+#     x = x-1
+# print(all_links)
 crwl.extract_info(all_links)
+
+
+
+#crwl.test_ix()
 
 
 
