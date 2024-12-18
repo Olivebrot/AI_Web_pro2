@@ -1,9 +1,12 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from whoosh.index import create_in
+from whoosh.index import create_in, open_dir
 from whoosh.fields import Schema, TEXT, ID
 from whoosh.analysis import StemmingAnalyzer
+from whoosh import scoring
+from whoosh.qparser import QueryParser
+
 
 from whoosh.qparser import QueryParser
 from whoosh import index
