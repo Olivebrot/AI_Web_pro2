@@ -1,23 +1,25 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from whoosh.index import create_in, open_dir
 from whoosh.fields import Schema, TEXT, ID
-from whoosh.analysis import StemmingAnalyzer
-from whoosh import scoring
-from whoosh.qparser import QueryParser
-
-
-from whoosh.qparser import QueryParser
 from whoosh import index
 import os
+import urllib.parse
 
 class Crawler:
     def __init__(self, start_url):
+        self.running = True
+        self.xx = 200
         self.start_url = start_url
         self.agenda = [start_url]  # Start with one URL
         self.visites = set()  # A set to store visited URLs to avoid duplicates
         self.visites.add(self.start_url)
+
+        # Parse the starting URL to get the base domain
+        parsed_url = urllib.parse.urlparse(start_url)
+        self.base_domain = f"{parsed_url.scheme}://{parsed_url.netloc}"
+
+        print("Base domain:", self.base_domain)
 
         #creating a Schema
         self.schema = Schema(url = ID(stored=True),
@@ -29,7 +31,7 @@ class Crawler:
             os.mkdir("indexdir")
         self.ix = index.create_in("indexdir", self.schema)
 
-    def get_all_links(self): 
+    def get_all_links(self,itteration): 
 
         while self.agenda:
             current_url = self.agenda.pop()  # Removes the last URL from the list
@@ -55,15 +57,19 @@ class Crawler:
                         full_url = urljoin(current_url, href)
 
                         # Only process internal URLs
-                        if not full_url.startswith("https://vm009.rz.uos.de/"):
+                        if not full_url.startswith(self.base_domain):
                             print("External URL:", full_url)
                             continue
 
                         # Add the link to the agenda if it hasn't been visited
                         if full_url not in self.visites:
                             self.visites.add(full_url)  # Mark the current URL as visited
+                            print(len(self.visites))
                             self.agenda.append(full_url)
                             print("Added to agenda:", full_url)
+                            if len(self.visites) > itteration:
+                                self.agenda.clear()
+                                break
 
             except Exception as e:
                 print("Error fetching URL:", e)

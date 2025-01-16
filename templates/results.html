@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
+    <style>
+        /* Add space between the list items */
+        li {
+            margin-bottom: 20px; /* Adds space below each result */
+            padding-bottom: 10px; /* Adds space inside each result */
+            border-bottom: 1px solid #ccc; /* Adds a thin line between each result */
+        }
+    </style>
+</head>
+<body>
+    <h1>Search Results</h1>
+    <p><strong>Searched Text:</strong> {{ srch_text }}</p>
+    <p><strong>Searched URL:</strong> {{ srch_url }}</p>
+
+    <h2>Results:</h2>
+    {% if results %}
+        <ul>
+        {% for result in results %}
+            <li>
+                <strong>Title:</strong> {{ result.title }}<br>
+                <strong>Header:</strong> {{ result.header }}<br>
+                <a href="{{ result.url }}" target="_blank">{{ result.url }}</a>
+                <strong>Score:</strong> {{ result.score}}<br>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No results found!</p>
+    {% endif %}
+    <a href="/">Back to Search</a>
+</body>
+</html>
