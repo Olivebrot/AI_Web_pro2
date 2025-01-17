@@ -3,11 +3,13 @@ from whoosh.fields import *
 from crawler import Crawler
 from search import Search
 import traceback
+
+app = Flask(__name__)
+
 @app.errorhandler(500)
 def internal_error(exception):
    return "<pre>"+traceback.format_exc()+"</pre>"
 
-app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def index():
