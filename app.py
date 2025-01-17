@@ -13,10 +13,11 @@ def internal_error(exception):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
+        # Capture form data
         srch_url = request.form.get('srch_url', '')
         srch_text = request.form.get('srch_text', '')
 
-        # Redirect to the search page with the query parameters, using url_for with _external=True
+        # Redirect to search page using url_for with _external=True
         return redirect(url_for('search', srch_url=srch_url, srch_text=srch_text, _external=True))
     
     return render_template('index.html')
