@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 from whoosh.fields import *
 from crawler import Crawler
 from search import Search
@@ -10,9 +10,15 @@ app = Flask(__name__)
 def internal_error(exception):
    return "<pre>"+traceback.format_exc()+"</pre>"
 
-
-@app.route('/', methods=['GET'])
+@app.route('/', methods=['GET', 'POST'])
 def index():
+    if request.method == 'POST':
+        srch_url = request.form.get('srch_url', '')
+        srch_text = request.form.get('srch_text', '')
+
+        # Redirect to the search page with the query parameters, using url_for with _external=True
+        return redirect(url_for('search', srch_url=srch_url, srch_text=srch_text, _external=True))
+    
     return render_template('index.html')
 
 @app.route('/search', methods=['GET'])
@@ -42,6 +48,7 @@ def search():
         ]
     else:
         formatted_results = []
+    
     return render_template('results.html', srch_url=srch_url, srch_text=srch_text, results=formatted_results)
 
 if __name__ == '__main__':
