@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, url_for
 from whoosh.fields import *
 from crawler import Crawler
 from search import Search
@@ -9,7 +9,6 @@ app = Flask(__name__)
 @app.errorhandler(500)
 def internal_error(exception):
    return "<pre>"+traceback.format_exc()+"</pre>"
-
 
 @app.route('/', methods=['GET'])
 def index():
@@ -42,6 +41,7 @@ def search():
         ]
     else:
         formatted_results = []
+    
     return render_template('results.html', srch_url=srch_url, srch_text=srch_text, results=formatted_results)
 
 if __name__ == '__main__':
