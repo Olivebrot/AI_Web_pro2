@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from whoosh.fields import *
 from crawler import Crawler
 from search import Search
@@ -10,17 +10,17 @@ app = Flask(__name__)
 def internal_error(exception):
    return "<pre>"+traceback.format_exc()+"</pre>"
 
+
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
 
 @app.route('/search', methods=['GET'])
 def search():
-    # Hardcoded values for search URL and text
-    srch_url = 'http://vm146.rz.uni-osnabrueck.de/u008/srch.wsgi/'
-    srch_text = 'example search text'  # Replace with the text you want to search for
+    srch_url = request.args.get('srch_url', '')
+    srch_text = request.args.get('srch_text', '')
 
-    # Initialize the crawler with the hardcoded URL
+    # Initialize the crawler with the user-provided URL
     crwl = Crawler(srch_url)
     all_links = crwl.get_all_links(itteration=20)
     crwl.extract_info(all_links)
@@ -42,7 +42,6 @@ def search():
         ]
     else:
         formatted_results = []
-    
     return render_template('results.html', srch_url=srch_url, srch_text=srch_text, results=formatted_results)
 
 if __name__ == '__main__':
