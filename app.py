@@ -10,11 +10,11 @@ app = Flask(__name__)
 def internal_error(exception):
    return "<pre>"+traceback.format_exc()+"</pre>"
 
-@app.route('/', methods=['GET'])
+@app.route('/u008/srch.wsgi', methods=['GET'])
 def index():
     return render_template('index.html')
 
-@app.route('/search', methods=['GET'])
+@app.route('/u008/srch.wsgi/search', methods=['GET'])
 def search():
     srch_url = request.args.get('srch_url', '')
     srch_text = request.args.get('srch_text', '')
